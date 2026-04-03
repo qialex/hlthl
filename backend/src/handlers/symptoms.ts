@@ -37,7 +37,12 @@ export const handler = async (
     if (httpMethod === "POST" && !id) {
       const parsed = NameSchema.safeParse(JSON.parse(body ?? "{}"));
       if (!parsed.success) return badRequest(parsed.error.flatten());
-      const item: Symptom = { id: randomUUID(), name: parsed.data.name };
+      const name = parsed.data.name;
+      const { Items: existing = [] } = await ddb.send(new ScanCommand({ TableName: "Symptoms" }));
+      if (existing.some((s: Symptom) => s.name.toLowerCase() === name.toLowerCase())) {
+        return badRequest("A symptom with this name already exists");
+      }
+      const item: Symptom = { id: randomUUID(), name };
       await ddb.send(new PutCommand({ TableName: "Symptoms", Item: item }));
       return created(item);
     }
@@ -46,11 +51,16 @@ export const handler = async (
     if (httpMethod === "PUT" && id) {
       const parsed = NameSchema.safeParse(JSON.parse(body ?? "{}"));
       if (!parsed.success) return badRequest(parsed.error.flatten());
+      const name = parsed.data.name;
       const { Item } = await ddb.send(
         new GetCommand({ TableName: "Symptoms", Key: { id } })
       );
       if (!Item) return notFound();
-      const updated: Symptom = { ...(Item as Symptom), name: parsed.data.name };
+      const { Items: existing = [] } = await ddb.send(new ScanCommand({ TableName: "Symptoms" }));
+      if (existing.some((s: Symptom) => s.name.toLowerCase() === name.toLowerCase() && s.id !== id)) {
+        return badRequest("A symptom with this name already exists");
+      }
+      const updated: Symptom = { ...(Item as Symptom), name };
       await ddb.send(new PutCommand({ TableName: "Symptoms", Item: updated }));
       return ok(updated);
     }

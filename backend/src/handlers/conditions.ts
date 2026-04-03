@@ -38,7 +38,12 @@ export const handler = async (
     if (httpMethod === "POST" && !id) {
       const parsed = NameSchema.safeParse(JSON.parse(body ?? "{}"));
       if (!parsed.success) return badRequest(parsed.error.flatten());
-      const item: Condition = { id: randomUUID(), name: parsed.data.name };
+      const name = parsed.data.name;
+      const { Items: existing = [] } = await ddb.send(new ScanCommand({ TableName: "Conditions" }));
+      if (existing.some((c: Condition) => c.name.toLowerCase() === name.toLowerCase())) {
+        return badRequest("A condition with this name already exists");
+      }
+      const item: Condition = { id: randomUUID(), name };
       await ddb.send(new PutCommand({ TableName: "Conditions", Item: item }));
       return created(item);
     }
@@ -47,11 +52,16 @@ export const handler = async (
     if (httpMethod === "PUT" && id) {
       const parsed = NameSchema.safeParse(JSON.parse(body ?? "{}"));
       if (!parsed.success) return badRequest(parsed.error.flatten());
+      const name = parsed.data.name;
       const { Item } = await ddb.send(
         new GetCommand({ TableName: "Conditions", Key: { id } })
       );
       if (!Item) return notFound();
-      const updated: Condition = { ...(Item as Condition), name: parsed.data.name };
+      const { Items: existing = [] } = await ddb.send(new ScanCommand({ TableName: "Conditions" }));
+      if (existing.some((c: Condition) => c.name.toLowerCase() === name.toLowerCase() && c.id !== id)) {
+        return badRequest("A condition with this name already exists");
+      }
+      const updated: Condition = { ...(Item as Condition), name };
       await ddb.send(new PutCommand({ TableName: "Conditions", Item: updated }));
       return ok(updated);
     }
