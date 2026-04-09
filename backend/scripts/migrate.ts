@@ -3,6 +3,7 @@ import {
   CreateTableCommand,
   ListTablesCommand,
 } from "@aws-sdk/client-dynamodb";
+import { tables as tableDefs } from "../../shared/tables";
 
 const client = new DynamoDBClient({
   region: "us-east-1",
@@ -12,26 +13,26 @@ const client = new DynamoDBClient({
 
 const tables = [
   {
-    TableName: "Conditions",
-    KeySchema: [{ AttributeName: "id", KeyType: "HASH" }],
-    AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+    TableName: tableDefs.conditions.name,
+    KeySchema: [{ AttributeName: tableDefs.conditions.partitionKey, KeyType: "HASH" }],
+    AttributeDefinitions: [{ AttributeName: tableDefs.conditions.partitionKey, AttributeType: "S" }],
     BillingMode: "PAY_PER_REQUEST",
   },
   {
-    TableName: "Symptoms",
-    KeySchema: [{ AttributeName: "id", KeyType: "HASH" }],
-    AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+    TableName: tableDefs.symptoms.name,
+    KeySchema: [{ AttributeName: tableDefs.symptoms.partitionKey, KeyType: "HASH" }],
+    AttributeDefinitions: [{ AttributeName: tableDefs.symptoms.partitionKey, AttributeType: "S" }],
     BillingMode: "PAY_PER_REQUEST",
   },
   {
-    TableName: "ConditionSymptoms",
+    TableName: tableDefs.conditionSymptoms.name,
     KeySchema: [
-      { AttributeName: "conditionId", KeyType: "HASH" },
-      { AttributeName: "symptomId", KeyType: "RANGE" },
+      { AttributeName: tableDefs.conditionSymptoms.partitionKey, KeyType: "HASH" },
+      { AttributeName: tableDefs.conditionSymptoms.sortKey, KeyType: "RANGE" },
     ],
     AttributeDefinitions: [
-      { AttributeName: "conditionId", AttributeType: "S" },
-      { AttributeName: "symptomId", AttributeType: "S" },
+      { AttributeName: tableDefs.conditionSymptoms.partitionKey, AttributeType: "S" },
+      { AttributeName: tableDefs.conditionSymptoms.sortKey, AttributeType: "S" },
     ],
     BillingMode: "PAY_PER_REQUEST",
   },
