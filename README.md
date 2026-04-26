@@ -119,4 +119,4 @@ In production, the natural deployment target for this stack would be Lambda + AP
 - Add a GSI on `ConditionSymptoms` (`symptomId` as hash key) to replace the scan with an efficient query for the Symptom → Conditions direction
 - Replace the Express shim with SAM local or CDK + LocalStack for a more faithful local Lambda environment
 - Add integration tests against DynamoDB Local using a test container
-- Add pagination to list endpoints  
+- Add pagination to list endpoints   
